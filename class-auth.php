@@ -758,10 +758,7 @@ class Auth {
                 }
             } else {
                 $regex = '/' . str_replace( '/', '\/', $path ) . '/';
-
-                write_log("Regex ". $regex. " uri ".$request_uri);
                 if ( preg_match( $regex, $request_uri ) && ( ! isset( $method ) || $method === $request_method ) ) {
-                    write_log("!!!matched for ". $regex);
                     return true;
                 }
             }
