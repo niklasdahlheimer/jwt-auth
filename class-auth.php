@@ -632,37 +632,47 @@ class Auth {
 				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
 
 				if ( strpos( $request_uri, $rest_api_slug . '/jwt-auth/v1/token' ) !== 0 ) {
-					// Whitelist some endpoints by default (without trailing * char).
-					$default_whitelist = array(
-						// WooCommerce namespace.
-						$rest_api_slug . '/wc/',
-						$rest_api_slug . '/wc-admin/',
-						$rest_api_slug . '/wc-auth/',
-						$rest_api_slug . '/wc-analytics/',
+                    if (!$this->has_blacklist()) {
+                        // no blacklist specified -> all endpoints will be blocked if they are not whitelisted
 
-						// WordPress namespace.
-						$rest_api_slug . '/wp/v2/',
-						$rest_api_slug . '/oembed/',
-					);
+                        // Whitelist some endpoints by default (without trailing * char).
+                        $default_whitelist = array(
+                            // WooCommerce namespace.
+                            $rest_api_slug . '/wc/',
+                            $rest_api_slug . '/wc-admin/',
+                            $rest_api_slug . '/wc-auth/',
+                            $rest_api_slug . '/wc-analytics/',
 
-					// Well, we let you adjust this default whitelist :).
-					$default_whitelist = apply_filters( 'jwt_auth_default_whitelist', $default_whitelist );
+                            // WordPress namespace.
+                            $rest_api_slug . '/wp/v2/',
+                            $rest_api_slug . '/oembed/',
+                        );
 
-					$is_ignored = false;
+                        // Well, we let you adjust this default whitelist :).
+                        $default_whitelist = apply_filters( 'jwt_auth_default_whitelist', $default_whitelist );
 
-					foreach ( $default_whitelist as $endpoint ) {
-						if ( false !== stripos( $request_uri, $endpoint ) ) {
-							$is_ignored = true;
+                        $is_ignored = false;
 
-							break;
-						}
-					}
+                        foreach ( $default_whitelist as $endpoint ) {
+                            if ( false !== stripos( $request_uri, $endpoint ) ) {
+                                $is_ignored = true;
 
-					if ( ! $is_ignored ) {
-						if ( ! $this->is_whitelisted() ) {
-							$this->jwt_error = $payload;
-						}
-					}
+                                break;
+                            }
+                        }
+
+                        if ( ! $is_ignored ) {
+                            if ( ! $this->is_whitelisted() ) {
+                                $this->jwt_error = $payload;
+                            }
+                        }
+                    } else {
+                        // blacklist is specified -> only blacklisted endpoints will be checked
+                        if ($this->is_blacklisted()) {
+                            // endpoint is blacklisted -> return error
+                            $this->jwt_error = $payload;
+                        }
+                    }
 				}
 			} else {
 				$this->jwt_error = $payload;
