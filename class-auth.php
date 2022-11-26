@@ -695,8 +695,8 @@ class Auth {
             return false;
         }
 
-        $request_uri    = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-        $request_method = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) );
+        $request_uri    = $_SERVER['REQUEST_URI'];
+        $request_method = $_SERVER['REQUEST_METHOD'];
 
         $prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
         $split       = explode( $prefix, $request_uri );
