@@ -682,53 +682,63 @@ class Auth {
 	 */
 	public function is_whitelisted() {
 		$whitelist = apply_filters( 'jwt_auth_whitelist', array() );
-
-		if ( empty( $whitelist ) || ! is_array( $whitelist ) ) {
-			return false;
-		}
-
-		$request_uri    = $_SERVER['REQUEST_URI'];
-		$request_method = $_SERVER['REQUEST_METHOD'];
-
-		$prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
-		$split       = explode( $prefix, $request_uri );
-		$request_uri = '/' . $prefix . ( ( count( $split ) > 1 ) ? $split[1] : $split[0] );
-
-		// Only use string before "?" sign if permalink is enabled.
-		if ( get_option( 'permalink_structure' ) && false !== stripos( $request_uri, '?' ) ) {
-			$split       = explode( '?', $request_uri );
-			$request_uri = $split[0];
-		}
-
-		// Let's remove trailingslash for easier checking.
-		$request_uri = untrailingslashit( $request_uri );
-
-		foreach ( $whitelist as $endpoint ) {
-			if ( is_array( $endpoint ) ) {
-				$method = $endpoint['method'];
-				$path   = $endpoint['path'];
-			} else {
-				$method = null;
-				$path   = $endpoint;
-			}
-			// If the endpoint doesn't contain * sign.
-			if ( false === stripos( $path, '*' ) ) {
-				$path = untrailingslashit( $path );
-
-				if ( $path === $request_uri && ( ! isset( $method ) || $method === $request_method ) ) {
-					return true;
-				}
-			} else {
-				$regex = '/' . str_replace( '/', '\/', $path ) . '/';
-
-				if ( preg_match( $regex, $request_uri ) && ( ! isset( $method ) || $method === $request_method ) ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
+        return $this->is_matching_list($whitelist);
 	}
+
+    /**
+     * Check if current endpoint is matching the specified list.
+     *
+     * @return bool
+     */
+    function is_matching_list($list) {
+        if ( empty( $list ) || ! is_array( $list ) ) {
+            return false;
+        }
+
+        $request_uri    = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
+        $request_method = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) );
+
+        $prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
+        $split       = explode( $prefix, $request_uri );
+        $request_uri = '/' . $prefix . ( ( count( $split ) > 1 ) ? $split[1] : $split[0] );
+
+        // Only use string before "?" sign if permalink is enabled.
+        if ( get_option( 'permalink_structure' ) && false !== stripos( $request_uri, '?' ) ) {
+            $split       = explode( '?', $request_uri );
+            $request_uri = $split[0];
+        }
+
+        // Let's remove trailingslash for easier checking.
+        $request_uri = untrailingslashit( $request_uri );
+
+        foreach ( $list as $endpoint ) {
+            if ( is_array( $endpoint ) ) {
+                $method = $endpoint['method'];
+                $path   = $endpoint['path'];
+            } else {
+                $method = null;
+                $path   = $endpoint;
+            }
+            // If the endpoint doesn't contain * sign.
+            if ( false === stripos( $path, '*' ) ) {
+                $path = untrailingslashit( $path );
+
+                if ( $path === $request_uri && ( ! isset( $method ) || $method === $request_method ) ) {
+                    return true;
+                }
+            } else {
+                $regex = '/' . str_replace( '/', '\/', $path ) . '/';
+
+                write_log("Regex ". $regex. " uri ".$request_uri);
+                if ( preg_match( $regex, $request_uri ) && ( ! isset( $method ) || $method === $request_method ) ) {
+                    write_log("!!!matched for ". $regex);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
 	/**
 	 * Filter to hook the rest_pre_dispatch, if there is an error in the request
