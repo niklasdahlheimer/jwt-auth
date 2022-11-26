@@ -684,6 +684,26 @@ class Auth {
 		$whitelist = apply_filters( 'jwt_auth_whitelist', array() );
         return $this->is_matching_list($whitelist);
 	}
+    
+    /**
+     * Check whether or not  current endpoint is blacklisted.
+     *
+     * @return bool
+     */
+    public function is_blacklisted() {
+        $blacklist = apply_filters( 'jwt_auth_blacklist', array() );
+        return $this->is_matching_list($blacklist);
+    }
+
+    /**
+     * Check if a blacklist is configured. If so, only the specified endpoints will be blocked.
+     *
+     * @return bool
+     */
+    public function has_blacklist() {
+        $blacklist = apply_filters( 'jwt_auth_blacklist', array() );
+        return is_array( $blacklist ) && !empty( $blacklist );
+    }
 
     /**
      * Check if current endpoint is matching the specified list.
