@@ -162,7 +162,9 @@ class Auth {
 			);
 		}
 
-		if ( isset( $_COOKIE['refresh_token'] ) ) {
+        /*Niklas Dahlheimer: This needs to be disabled because expo app cant deal with a setted refresh_token cookie
+        Logins with another account will return old credentials, lohin form various devices lead to errors etc.*/
+		if ( isset( $_COOKIE['refresh_token']  ) && false) {
 			$device  = $request->get_param( 'device' ) ?: '';
 			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
 
